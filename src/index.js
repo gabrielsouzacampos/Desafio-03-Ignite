@@ -8,6 +8,22 @@ app.use(express.json());
 
 const repositories = [];
 
+function findRepositoryByIndex(request, response, next){
+  const { id } = request.params;
+
+  if(!id) 
+    return response.status(400).json({ error: 'id is required' });
+
+  const repositoryIndex = repositories.findIndex(repository => repository.id === id);
+
+  if(repositoryIndex === -1)
+    return response.status(404).json({ error:'repository not found' });
+    
+  request.repositoryIndex = repositoryIndex;
+
+  return next();
+}
+
 app.get("/repositories", (request, response) => {
   return response.json(repositories);
 });
@@ -28,15 +44,15 @@ app.post("/repositories", (request, response) => {
   return response.status(201).json(repository);
 });
 
-app.put("/repositories/:id", (request, response) => {
-  const { id } = request.params;
-  const updatedRepository = request.body;
+app.put("/repositories/:id", findRepositoryByIndex, (request, response) => {
+  const { repositoryIndex } = request;
+  const { title, url, techs } = request.body;
 
-  repositoryIndex = repositories.findindex(repository => repository.id === id);
-
-  if (repositoryIndex < 0) {
-    return response.status(404).json({ error: "Repository not found" });
-  }
+  const updatedRepository = {
+    title,
+    url,
+    techs
+  };
 
   const repository = { ...repositories[repositoryIndex], ...updatedRepository };
 
